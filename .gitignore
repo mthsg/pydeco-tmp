@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+dist/
+build/
+# jamais de données réelles / captures / secrets
+*.log
+capture*.txt
+OPCODES.json
+*.apk
+secrets*
