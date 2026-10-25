@@ -1,7 +1,7 @@
 """Deco TMP transport layer: SSH (dropbear) + TMP type-5 / business v2 framing.
 
-Protocol reverse-engineered from the TP-Link Deco app (tpm5) and verified by a Frida capture of
-a real session. Key points (see RAPPORT-TMP.md for the full write-up):
+Protocol reverse-engineered from the TP-Link Deco app and verified against a captured live
+session. Key points:
 
 * SSH dropbear on port 20001. Password auth:
   username = hex(SHA-1(TP-Link account email)), password = the account password.
@@ -35,8 +35,8 @@ from typing import Any
 
 try:
     import paramiko
-except ImportError as exc:  # pragma: no cover
-    raise ImportError("pydeco requires paramiko (`pip install paramiko`)") from exc
+except ImportError:  # import paresseux : l'échec survient à la connexion, pas à l'import
+    paramiko = None  # type: ignore[assignment]
 
 TMP_PORT = 20001
 TMP_LOCAL = ("127.0.0.1", 20002)
@@ -66,14 +66,14 @@ class DecoTransport:
         self.host_key_sha256 = host_key_sha256
         self.timeout = timeout
         self._sock: socket.socket | None = None
-        self._tr: "paramiko.Transport | None" = None
+        self._tr: paramiko.Transport | None = None
         self._chan: Any = None
         self._seq = 1          # TMP sequence (M()), starts at 1
         self._txid = 0         # business txid (h()), starts at 0
         self.token: str | None = None
 
     # -- lifecycle -------------------------------------------------------------------
-    def __enter__(self) -> "DecoTransport":
+    def __enter__(self) -> DecoTransport:
         self.connect()
         return self
 
@@ -82,6 +82,8 @@ class DecoTransport:
 
     def connect(self) -> None:
         """Open SSH, authenticate (ONE attempt) and allocate the session token."""
+        if paramiko is None:
+            raise DecoError("pydeco requires paramiko (`pip install paramiko`)")
         self._sock = socket.create_connection((self.host, TMP_PORT), timeout=self.timeout)
         self._tr = paramiko.Transport(self._sock)
         self._tr.start_client(timeout=self.timeout)
@@ -102,7 +104,7 @@ class DecoTransport:
             try:
                 if obj is not None:
                     obj.close()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 — fermeture au mieux, session déjà perdue
                 pass
         self._chan = self._tr = self._sock = None
         self.token = None
@@ -159,8 +161,8 @@ class DecoTransport:
     def _parse_biz(payload: bytes) -> dict:
         (_, _ver, opcode, ptype, err, txid, _crc, total, offset) = struct.unpack_from(
             ">BBHBBHIII", payload, 0)
-        return dict(opcode=opcode, ptype=ptype, err=err, txid=txid,
-                    total=total, offset=offset, body=payload[20:])
+        return {"opcode": opcode, "ptype": ptype, "err": err, "txid": txid,
+                "total": total, "offset": offset, "body": payload[20:]}
 
     # -- low-level API ---------------------------------------------------------------
     def request(self, opcode: int, params: dict | None = None) -> bytes:

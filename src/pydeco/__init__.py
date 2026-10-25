@@ -7,5 +7,5 @@ Public API: :class:`DecoClient`, :func:`keychain`, :class:`DecoError`, plus the 
 from .client import DecoClient, keychain
 from .transport import DecoError, DecoTransport
 
-__version__ = "0.1.0"
-__all__ = ["DecoClient", "DecoTransport", "DecoError", "keychain"]
+__version__ = "0.2.0"
+__all__ = ["DecoClient", "DecoError", "DecoTransport", "keychain"]

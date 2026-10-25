@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydeco-tmp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Control TP-Link Deco routers locally over their native TMP protocol, without the app"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -31,3 +31,7 @@ packages = ["src/pydeco"]
 
 [tool.ruff]
 line-length = 110
+
+[tool.ruff.lint]
+# PYI034 demande typing.Self (Python 3.11+) ; le projet supporte Python 3.9.
+ignore = ["PYI034"]

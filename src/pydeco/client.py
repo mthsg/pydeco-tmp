@@ -39,7 +39,7 @@ class DecoClient:
                  host_key_sha256: str | None = None, timeout: int = 10):
         self._tr = DecoTransport(host, email, password, host_key_sha256, timeout)
 
-    def __enter__(self) -> "DecoClient":
+    def __enter__(self) -> DecoClient:
         self._tr.connect()
         return self
 
