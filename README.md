@@ -17,7 +17,7 @@ wrapped in a binary framing (TMP type-5 + a "business v2" header), addressed by 
 Key finding that makes this work: on the SSH transport there is **no application-level handshake** —
 opening the channel *is* the connection. (The app's TCP/TDP transport sends a `[1,1,1,0]` CONNECT;
 sending that over SSH corrupts the session.) After a one-shot `ALLOC` that returns a session token,
-every setting is a `opcode + JSON` round-trip. See `RAPPORT-TMP.md` for the full protocol write-up.
+every setting is a `opcode + JSON` round-trip (the framing is documented in `pydeco/transport.py`).
 
 ## Install
 
@@ -51,10 +51,16 @@ with DecoClient(host="192.168.0.1",
 
 ## Status
 
-v0.1 — 58 read domains mapped; 13 writes confirmed from capture (UPnP, DoH, DHCP reservation
-add/modify, DDNS, VPN server, IPv6, guest network, LED, WPS, manager roles, HomeShield features,
-DNS servers), more inferred. The capture holds ~91 opcodes total; contributions welcome — capture
-a setting change and add its opcode/params.
+v0.2.0 — 73 read domains mapped (66 live-confirmed by the read-only emulator session of 25/10,
+0 CRC errors); 45 writes: 19 confirmed from capture or live background syncs (UPnP, DoH, DHCP
+reservation add/modify, DDNS, Internet backup, IPv6, guest network, LED, WPS, manager roles,
+HomeShield features, DNS servers, cloud account, language, 802.11r, network scan start/stop,
+data analysis) and 26 inferred from the GET/ADD/MODIFY/REMOVE pattern or cross-checked against
+the app's opcode table (parental controls, QoS, port forwarding, access control, camera
+security, operation mode — critical). The Deco also pushes unsolicited notifications (0x4015
+client_notify: per-client event). Opcode names and codes were corrected in 0.2.0 — see
+CHANGELOG.md before upgrading. Contributions welcome — capture a setting change and add its
+opcode/params.
 
 ## License
 
